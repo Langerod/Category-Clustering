@@ -8,7 +8,7 @@ import sys
 def get_legal_dist_measures():
     return ['euclidean', 'sqeuclidean', 'correlation', 'cityblock',
             'relevant_distance', 'weighted_threshold', 'forbes-corr',
-            'experimental_relevant_distance']
+            'exp_relevant_distance']
 
 
 def get_legal_feature_types():
@@ -92,14 +92,6 @@ def cluster(donor_fns, reference_fns, reference_types, dist, linkage_method, fea
     chromosome start_pos end_pos
 
     """
-    print(donor_fns)
-    print(reference_fns)
-    print(reference_types)
-    print(dist)
-    print(linkage_method)
-    print(feature_type)
-
-
     if print_progress:
         write = stdout_print
     else:

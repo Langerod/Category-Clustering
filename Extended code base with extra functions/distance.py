@@ -22,7 +22,6 @@ def _copy_array_if_base_present(a):
     else:
         return a
 
-
 def _copy_arrays_if_base_present(T):
     """
     Accepts a tuple of arrays T. Copies the array T[i] if its base array
@@ -33,7 +32,6 @@ def _copy_arrays_if_base_present(T):
     l = [_copy_array_if_base_present(a) for a in T]
     return l
 
-
 def _convert_to_bool(X):
     if X.dtype != np.bool:
         X = np.bool_(X)
@@ -41,13 +39,13 @@ def _convert_to_bool(X):
         X = X.copy()
     return X
 
-
 def _convert_to_double(X):
     if X.dtype != np.double:
         X = np.double(X)
     if not X.flags.contiguous:
         X = X.copy()
     return X
+
 
 
 def euclidean(u, v):
@@ -74,7 +72,6 @@ def euclidean(u, v):
     q=np.matrix(u-v)
     return np.sqrt((q*q.T).sum())
 
-
 def sqeuclidean(u, v):
     """
     Computes the squared Euclidean distance between two n-vectors u and v,
@@ -98,7 +95,6 @@ def sqeuclidean(u, v):
     u = np.asarray(u, order='c')
     v = np.asarray(v, order='c')
     return ((u-v)*(u-v).T).sum()
-
 
 def correlation(u, v):
     r"""
@@ -131,7 +127,6 @@ def correlation(u, v):
                   (np.sqrt(np.dot(um, um))
                    * np.sqrt(np.dot(vm, vm))))
 
-
 def cityblock(u, v):
     r"""
     Computes the Manhattan distance between two n-vectors u and v,
@@ -155,13 +150,11 @@ def cityblock(u, v):
     v = np.asarray(v, order='c')
     return abs(u-v).sum()
 
-
 def weighted_threshold(u, v, t=0.5, w=0.25):
     u = np.asarray(u, order='c',dtype=float)
     v = np.asarray(v, order='c',dtype=float)
 
     return (len(u) - np.sum((u>t)&(v>t)) - np.sum((u<=t)&(v<=t))*w) / len(u)
-
 
 def forbes_dist(u, v):
     u = np.asarray(u, order='c', dtype=bool)
@@ -181,7 +174,6 @@ def corr_dist(u, v):
 
     return (1 - u * v) / 2
 
-
 def forbes_corr_dist(u_pres,u_cor,v_pres,v_cor,k):
     """
     :param u_pres: 1D bool bin presence
@@ -192,7 +184,6 @@ def forbes_corr_dist(u_pres,u_cor,v_pres,v_cor,k):
     :return: the forbes corr distance between two
     """
     return k * forbes_dist(u_pres, v_pres) + (1 - k) * corr_dist(u_cor, v_cor)
-
 
 def forbes_corr_pdist(presence, corr_coeff, k):
     m = presence.shape[0]
@@ -208,13 +199,11 @@ def forbes_corr_pdist(presence, corr_coeff, k):
 
     return dm
 
-
 def relevant_distance(u, v):
     u = np.asarray(u, order='c')
     v = np.asarray(v, order='c')
 
     return (((1 - (u+v)/2).sum() + abs(u-v).sum()) / len(u))
-
 
 def experimental_relevant_distance(u, v):
     u = np.asarray(u, order='c')
@@ -244,11 +233,12 @@ def pdist(X, metric='euclidean'):
            A condensed distance matrix.
     """
 
-    #         21. Y = pdist(X, 'Y')
-    #
-    #           Computes the distance between all pairs of vectors in X
-    #           using the distance metric Y but with a more succint,
-    #           verifiable, but less efficient implementation.
+
+#         21. Y = pdist(X, 'Y')
+#
+#           Computes the distance between all pairs of vectors in X
+#           using the distance metric Y but with a more succint,
+#           verifiable, but less efficient implementation.
 
     X = np.asarray(X, order='c')
 
@@ -298,6 +288,42 @@ def pdist(X, metric='euclidean'):
             raise ValueError('Unknown Distance Metric: %s' % mstr)
     else:
         raise TypeError('2nd argument metric must be a string identifier or a function.')
+    return dm
+
+
+def cat_pdist(X, cat_idx, threshold=0.5, eq_under_mul=0.5):
+    """
+    With X containing {0,1} this performs the same as city block distance,
+    but has the option to weight the sum of equal zeros in the vectors.
+    This way d([1,1,1],[0,0,0]) >  d([0,0,0],[0,0,0]) > d([1,1,1],[1,1,1])
+    and d([1,1,1],[1,1,1]) = 0 by default.
+
+    !!!Seems to go towards categories with small category intervals
+
+    :param X:
+    :param cat_idx:
+    :param threshold:
+    :param eq_under_mul:
+    :return:
+    """
+    cat_X = [X[::,cat] for cat in cat_idx]
+
+    m = X.shape[0]
+    n = X.shape[1]
+
+    dm = np.zeros((len(cat_idx),m,m), dtype=float)
+    dm += np.inf
+
+    for i in range(0, m - 1):
+        for j in range(i+1, m):
+            for cat in range(0, len(cat_idx)):
+
+                u = cat_X[cat][i]
+                v = cat_X[cat][j]
+
+                dm[cat][i][j] = len(u) -  np.sum((u > threshold) & (v > threshold))\
+                - np.sum((u <= threshold) & (v <= threshold)) * eq_under_mul
+
     return dm
 
 

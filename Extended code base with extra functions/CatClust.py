@@ -180,6 +180,7 @@ class Tree:
         return sub_trees
 
 
+
     def __init__(self, id, step=-1, dist=0, left=None, right=None, cat=[]):
         self.step = step
         self.dist = dist
@@ -196,6 +197,7 @@ class Tree:
     def __repr__(self):
         """
         [left ( cat ) right] for each node if not leaf
+
 
         """
 
@@ -717,6 +719,54 @@ def connect_clusters(Z, trees, step):
     return Z
 
 
+def test_with_random_values(n=100, m=50, c=8, lock_to=0, method='complete', time_it=True):
+    # n = tracks
+    # m = ssms
+    # c = clusters
+
+    assert m > c
+    # import scipy
+
+    X = np.random.rand(n, m)
+
+    start_range = range(0, m if m % c == 0 else m - m / c, m / c)
+    end_range = range(m / c, m, m / c)
+    if len(end_range) < len(start_range):
+        end_range.append(m)
+
+    cats = [range(x, y) for x, y in zip(start_range, end_range)]
+    cats[-1] = range((m / c) * (c - 1), m)
+
+    t = time.time()
+    write("Testing with n=%d, m=%d and c=%d" % (n, m, c))
+
+    Z = linkage(X, cats, lock_to=lock_to, method=method, weight_scale=1., write_linkage=False)
+
+    if time_it:
+        write("Time: ", time.time() - t)
+
+    dists = Z[::, 2].copy()
+    dists = np.sort(dists)
+    write(dists == Z[::, 2])
+    write((dists != Z[::, 2]).sum() - np.isnan(Z[::, 2]).sum())
+
+    # hi.dendrogram(Z)
+    # plt.show()
+    return (dists != Z[::, 2]).sum() - np.isnan(Z[::, 2]).sum() == 0
+
+
+def test_with_different_parameters():
+    n = 4
+    c = 5
+    while test_with_random_values(n, c=c, lock_to=5, method='complete', time_it=True):
+        n += 1
+        if n == 73:
+            n = 3
+            c += 1
+            if c == 60:
+                c = 5
+
+
 def _test_():
     import doctest
     doctest.testmod()
@@ -724,4 +774,5 @@ def _test_():
 
 if __name__ == "__main__":
     _test_()
-
+    #_test_with_random_values()
+    #_test_with_different_parameters()
